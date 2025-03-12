@@ -13,6 +13,7 @@ export default function ImageUploader() {
   const [originalImage, setOriginalImage] = useState<string | null>(null)
   const [processedImage, setProcessedImage] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isDemoMode, setIsDemoMode] = useState(false)
   const { toast } = useToast()
 
   // Simplified file handling - back to basics
@@ -35,12 +36,13 @@ export default function ImageUploader() {
       if (event.target?.result) {
         setOriginalImage(event.target.result as string)
         setProcessedImage(null)
+        setIsDemoMode(false)
       }
     }
     reader.readAsDataURL(file)
   }
 
-  const processImage = async () => {
+  const processImage = async (useDemo = false) => {
     if (!originalImage) return
 
     setIsProcessing(true)
@@ -53,8 +55,8 @@ export default function ImageUploader() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // Just send a flag instead of the full image
           generateScrooge: true,
+          demoMode: useDemo,
         }),
       })
 
@@ -67,9 +69,10 @@ export default function ImageUploader() {
 
       if (data.processedImage) {
         setProcessedImage(data.processedImage)
+        setIsDemoMode(data.demoMode === true)
 
         toast({
-          title: "Success!",
+          title: data.demoMode ? "Demo Mode" : "Success!",
           description: data.message || "Your Scrooge transformation is complete",
         })
       } else {
@@ -77,6 +80,19 @@ export default function ImageUploader() {
       }
     } catch (error) {
       console.error("Processing error:", error)
+
+      // If we get a billing error, try again in demo mode
+      if (error instanceof Error && (error.message.includes("billing") || error.message.includes("limit"))) {
+        toast({
+          title: "OpenAI Billing Limit Reached",
+          description: "Switching to demo mode instead",
+        })
+
+        // Try again with demo mode
+        processImage(true)
+        return
+      }
+
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to process your image. Please try again.",
@@ -101,6 +117,7 @@ export default function ImageUploader() {
   const resetImages = () => {
     setOriginalImage(null)
     setProcessedImage(null)
+    setIsDemoMode(false)
   }
 
   return (
@@ -134,12 +151,19 @@ export default function ImageUploader() {
           <Card className="p-4 bg-slate-800 overflow-hidden">
             <div className="aspect-square relative overflow-hidden rounded-md mb-3 bg-slate-700/50">
               {processedImage ? (
-                <Image
-                  src={processedImage || "/placeholder.svg"}
-                  alt="Scrooge transformation"
-                  fill
-                  className="object-cover"
-                />
+                <div className="relative h-full">
+                  <Image
+                    src={processedImage || "/placeholder.svg"}
+                    alt="Scrooge transformation"
+                    fill
+                    className="object-cover"
+                  />
+                  {isDemoMode && (
+                    <div className="absolute bottom-2 right-2 bg-amber-600 text-white text-xs px-2 py-1 rounded">
+                      Demo Mode
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="flex items-center justify-center h-full">
                   {isProcessing ? (
@@ -160,9 +184,14 @@ export default function ImageUploader() {
 
       <div className="flex flex-wrap gap-4 justify-center">
         {originalImage && !processedImage && !isProcessing && (
-          <Button onClick={processImage} className="bg-amber-600 hover:bg-amber-700">
-            Transform to Scrooge
-          </Button>
+          <>
+            <Button onClick={() => processImage(false)} className="bg-amber-600 hover:bg-amber-700">
+              Transform to Scrooge
+            </Button>
+            <Button onClick={() => processImage(true)} variant="outline">
+              Use Demo Mode
+            </Button>
+          </>
         )}
 
         {processedImage && (
