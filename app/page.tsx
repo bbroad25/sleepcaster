@@ -13,7 +13,7 @@ export default function Home() {
           </div>
           <p className="text-lg text-amber-100">Transform yourself into Ebenezer Scrooge with our AI filter</p>
           <div className="mt-2">
-            <span className="bg-amber-900/30 text-amber-300 px-3 py-1 rounded-full text-sm font-mono">$sleepy</span>
+            <span className="bg-amber-900/30 text-amber-300 px-3 py-1 rounded-full text-sm font-mono">$sleepy<a href=“https://dexscreener.com/base/0xf1078a39676a702af5f14a5fce9640a4623c7795”></span>
           </div>
         </header>
 
