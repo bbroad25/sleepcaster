@@ -6,10 +6,11 @@ export const maxDuration = 60 // 60 seconds
 
 export async function POST(request: Request) {
   try {
-    const { image } = await request.json()
+    // We're no longer expecting an image in the request
+    const { generateScrooge } = await request.json()
 
-    if (!image) {
-      return NextResponse.json({ error: "No image provided" }, { status: 400 })
+    if (!generateScrooge) {
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 })
     }
 
     // Initialize the OpenAI client
@@ -17,12 +18,11 @@ export async function POST(request: Request) {
       apiKey: process.env.OPENAI_API_KEY,
     })
 
-    // Instead of using the edit endpoint, we'll use the create endpoint
-    // with a detailed prompt that references the uploaded image
+    // Generate a Scrooge image
     const response = await openai.images.generate({
       model: "dall-e-3",
       prompt:
-        "Create an image of a person dressed as Ebenezer Scrooge at night. The person should be wearing old-timey Victorian-era pajamas, a nightcap, and holding a lit candlestick. The scene should have a dark background with a warm candlelight glow. Make it look like a scene from A Christmas Carol.",
+        "Create a detailed portrait of a person dressed as Ebenezer Scrooge at night. The person should be wearing old-timey Victorian-era pajamas, a white nightcap, and holding a lit brass candlestick. The scene should have a dark background with a warm candlelight glow illuminating their face. Make it look like a scene from A Christmas Carol with rich, dramatic lighting.",
       n: 1,
       size: "1024x1024",
       quality: "standard",
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     // Return the processed image as a data URL
     return NextResponse.json({
       processedImage: `data:image/png;base64,${base64GeneratedImage}`,
-      message: "Image processed successfully with Scrooge filter",
+      message: "Scrooge transformation complete!",
     })
   } catch (error) {
     console.error("Error processing image:", error)
