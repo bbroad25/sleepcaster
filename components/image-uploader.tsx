@@ -28,12 +28,66 @@ export default function ImageUploader() {
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      setOriginalImage(event.target?.result as string)
-      setProcessedImage(null)
-    }
-    reader.readAsDataURL(file)
+    // Resize and compress the image before setting it
+    resizeAndCompressImage(file, 800, 0.8)
+      .then((resizedImage) => {
+        setOriginalImage(resizedImage)
+        setProcessedImage(null)
+      })
+      .catch((error) => {
+        console.error("Error resizing image:", error)
+        toast({
+          title: "Error",
+          description: "Failed to process your image. Please try a smaller image.",
+          variant: "destructive",
+        })
+      })
+  }
+
+  // Function to resize and compress an image
+  const resizeAndCompressImage = (file: File, maxWidth: number, quality: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = (event) => {
+        const img = new Image()
+        img.src = event.target?.result as string
+        img.onload = () => {
+          // Calculate new dimensions
+          let width = img.width
+          let height = img.height
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width)
+            width = maxWidth
+          }
+
+          // Create canvas and resize image
+          const canvas = document.createElement("canvas")
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext("2d")
+
+          if (!ctx) {
+            reject(new Error("Could not get canvas context"))
+            return
+          }
+
+          // Draw image on canvas
+          ctx.drawImage(img, 0, 0, width, height)
+
+          // Convert to data URL with compression
+          const dataUrl = canvas.toDataURL("image/jpeg", quality)
+          resolve(dataUrl)
+        }
+        img.onerror = () => {
+          reject(new Error("Failed to load image"))
+        }
+      }
+      reader.onerror = () => {
+        reject(new Error("Failed to read file"))
+      }
+    })
   }
 
   const processImage = async () => {
@@ -104,7 +158,6 @@ export default function ImageUploader() {
             <h3 className="text-xl font-medium mb-2">Upload your selfie</h3>
             <p className="text-slate-400 mb-4">Click to select or drag and drop</p>
 
-            {/* This is the key change - making the button directly trigger the file input */}
             <input type="file" id="image-upload" accept="image/*" className="hidden" onChange={handleFileChange} />
             <Button
               variant="outline"
