@@ -91,16 +91,22 @@ export default function ImageUploader() {
   return (
     <div className="space-y-8">
       {!originalImage ? (
-        <Card className="border-dashed border-2 border-slate-700 bg-slate-800/50 p-12 text-center cursor-pointer hover:bg-slate-800 transition-colors">
-          <label className="flex flex-col items-center cursor-pointer">
+        <Card className="border-dashed border-2 border-slate-700 bg-slate-800/50 p-12 text-center hover:bg-slate-800 transition-colors">
+          <div className="flex flex-col items-center">
             <Upload className="h-12 w-12 text-amber-300 mb-4" />
             <h3 className="text-xl font-medium mb-2">Upload your selfie</h3>
             <p className="text-slate-400 mb-4">Click to select or drag and drop</p>
-            <Button variant="outline" className="bg-slate-700">
+
+            {/* This is the key change - making the button directly trigger the file input */}
+            <input type="file" id="image-upload" accept="image/*" className="hidden" onChange={handleFileChange} />
+            <Button
+              variant="outline"
+              className="bg-slate-700"
+              onClick={() => document.getElementById("image-upload")?.click()}
+            >
               Select Image
             </Button>
-            <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-          </label>
+          </div>
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
