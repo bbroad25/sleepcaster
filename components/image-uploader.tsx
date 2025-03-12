@@ -51,20 +51,27 @@ export default function ImageUploader() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to process image")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to process image")
       }
 
       const data = await response.json()
-      setProcessedImage(data.processedImage)
 
-      toast({
-        title: "Success!",
-        description: "Your Scrooge transformation is complete",
-      })
+      if (data.processedImage) {
+        setProcessedImage(data.processedImage)
+
+        toast({
+          title: "Success!",
+          description: data.message || "Your Scrooge transformation is complete",
+        })
+      } else {
+        throw new Error("No processed image returned")
+      }
     } catch (error) {
+      console.error("Processing error:", error)
       toast({
         title: "Error",
-        description: "Failed to process your image. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to process your image. Please try again.",
         variant: "destructive",
       })
     } finally {
