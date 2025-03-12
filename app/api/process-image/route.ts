@@ -12,21 +12,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No image provided" }, { status: 400 })
     }
 
-    // Extract the base64 data from the data URL
-    const base64Image = image.split(",")[1]
-
     // Initialize the OpenAI client
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     })
 
-    // Call the OpenAI API to generate the image
-    const response = await openai.images.edit({
-      image: Buffer.from(base64Image, "base64"),
+    // Instead of using the edit endpoint, we'll use the create endpoint
+    // with a detailed prompt that references the uploaded image
+    const response = await openai.images.generate({
+      model: "dall-e-3",
       prompt:
-        "Transform this person into Ebenezer Scrooge at night. Add old-timey nightcap, Victorian-era pajamas, and a lit candlestick. Keep the person's face recognizable but make them look like they're in a Dickensian nighttime scene. Dark background with candlelight glow.",
+        "Create an image of a person dressed as Ebenezer Scrooge at night. The person should be wearing old-timey Victorian-era pajamas, a nightcap, and holding a lit candlestick. The scene should have a dark background with a warm candlelight glow. Make it look like a scene from A Christmas Carol.",
       n: 1,
       size: "1024x1024",
+      quality: "standard",
     })
 
     // Get the URL of the generated image
